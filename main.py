@@ -640,6 +640,17 @@ def webhook():
     url = request.form["MediaUrl0"]
     who = request.form["From"]
     host = request.host
+    
+    tips_message = """💡 *Tips for Better Voice Notes*
+
+📌 Speak slowly and steadily
+📌 Pause briefly between sentences
+📌 Record in a quiet environment
+📌 Speak clearly and avoid mumbling
+
+⏳ Processing your voice note... You'll get your link shortly!"""
+    
+    resp.message(tips_message)
 
     def job():
         try:
@@ -683,7 +694,6 @@ def webhook():
             traceback.print_exc()
 
     threading.Thread(target=job).start()
-    resp.message("Processing your voice note... You'll get a link shortly!")
     return str(resp)
 
 @app.route("/view/<id>")
