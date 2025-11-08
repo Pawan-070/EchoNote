@@ -706,6 +706,92 @@ Return in the exact format shown above."""
         print(f"Error extracting datetime: {e}")
         return None, None
 
+def get_calendar_service():
+    """Get authenticated Google Calendar service"""
+    try:
+        import pickle
+        from google.oauth2.credentials import Credentials
+        from google_auth_oauthlib.flow import InstalledAppFlow
+        from google.auth.transport.requests import Request
+        from googleapiclient.discovery import build
+        
+        SCOPES = ['https://www.googleapis.com/auth/calendar']
+        creds = None
+        
+        # Load existing credentials
+        if os.path.exists('token.pickle'):
+            with open('token.pickle', 'rb') as token:
+                creds = pickle.load(token)
+        
+        # If credentials don't exist or are invalid, authenticate
+        if not creds or not creds.valid:
+            if creds and creds.expired and creds.refresh_token:
+                creds.refresh(Request())
+            elif os.path.exists('credentials.json'):
+                flow = InstalledAppFlow.from_client_secrets_file(
+                    'credentials.json', SCOPES)
+                creds = flow.run_local_server(port=0)
+            else:
+                print("credentials.json not found. Google Calendar integration disabled.")
+                return None
+            
+            # Save credentials for future use
+            with open('token.pickle', 'wb') as token:
+                pickle.dump(creds, token)
+        
+        return build('calendar', 'v3', credentials=creds)
+    except Exception as e:
+        print(f"Error getting calendar service: {e}")
+        return None
+
+def create_calendar_event(task_text, date_str, time_str=None):
+    """Create a Google Calendar event for a task"""
+    try:
+        service = get_calendar_service()
+        if not service:
+            print("Calendar service not available")
+            return False
+        
+        # Build event time
+        if time_str:
+            start_datetime = f"{date_str}T{time_str}:00"
+            # Default 1-hour duration
+            end_time = datetime.strptime(time_str, '%H:%M') + timedelta(hours=1)
+            end_datetime = f"{date_str}T{end_time.strftime('%H:%M')}:00"
+            
+            event = {
+                'summary': task_text,
+                'start': {
+                    'dateTime': start_datetime,
+                    'timeZone': 'UTC',
+                },
+                'end': {
+                    'dateTime': end_datetime,
+                    'timeZone': 'UTC',
+                },
+                'description': 'Created from Voice Plans App'
+            }
+        else:
+            # All-day event if no time specified
+            event = {
+                'summary': task_text,
+                'start': {
+                    'date': date_str,
+                },
+                'end': {
+                    'date': date_str,
+                },
+                'description': 'Created from Voice Plans App'
+            }
+        
+        created_event = service.events().insert(calendarId='primary', body=event).execute()
+        print(f"Calendar event created: {created_event.get('htmlLink')}")
+        return True
+        
+    except Exception as e:
+        print(f"Error creating calendar event: {e}")
+        return False
+
 def check_and_send_reminders():
     """Check for due tasks and send WhatsApp reminders"""
     from datetime import datetime
@@ -872,6 +958,15 @@ def webhook():
                 })
                 if extracted_date or extracted_time:
                     print(f"Extracted date='{extracted_date}', time='{extracted_time}' from: {line}")
+                
+                # Create Google Calendar event if date is present
+                if extracted_date:
+                    calendar_success = create_calendar_event(line, extracted_date, extracted_time)
+                    if calendar_success:
+                        print(f"✓ Added to Google Calendar: {line}")
+                    else:
+                        print(f"✗ Could not add to Google Calendar (not configured or error)")
+
             
             notes[id] = tasks
             note_owners[id] = who
