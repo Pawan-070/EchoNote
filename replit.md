@@ -5,7 +5,8 @@ A modern, professional Flask web application that converts WhatsApp voice notes 
 
 ## Features
 - **Modern EchoNote Design**: Professional teal-gray color scheme with frosted glass effects and elegant animations
-- **AI Importance Classification**: Tasks automatically classified as "Important" (family functions, office meetings) or "Non-Important" (shopping, errands)
+- **Smart Importance Classification**: Tasks automatically classified as "Important" (family functions, office meetings, medical appointments) or "Non-Important" (shopping, errands, chores) using keyword matching
+- **Live Clock Widget**: Mini clock displaying current time and date in the top corner
 - **Smart Categorization**: Tasks organized into ⭐ Important and 📋 Non-Important sections with visual badges
 - **Voice Note Processing**: Receives voice notes via Twilio WhatsApp webhook
 - **AI Transcription**: Uses AssemblyAI for accurate English transcription
@@ -31,9 +32,9 @@ The following secrets are configured in Replit Secrets:
 1. User sends a WhatsApp voice note to the configured Twilio number
 2. Twilio forwards the audio to the `/webhook` endpoint
 3. App downloads and transcribes audio using AssemblyAI
-4. AI extracts dates/times from transcription using OpenAI GPT-3.5-turbo
-5. Each task is classified as "important" or "non-important" using AI
-6. Tasks are organized into categorized sections
+4. Each task is classified as "important" or "non-important" using keyword matching
+5. AI extracts dates/times from transcription (when OpenAI quota available)
+6. Tasks are organized into categorized sections with live clock display
 7. Scheduled tasks are automatically added to Google Calendar
 8. A unique shareable link with beautiful UI is generated
 9. Link is sent back to user via WhatsApp

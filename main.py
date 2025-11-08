@@ -75,6 +75,53 @@ HTML = """
         z-index: 1;
       }
       
+      /* Mini Clock Widget */
+      .mini-clock {
+        position: fixed;
+        top: 1.5rem;
+        right: 1.5rem;
+        background: rgba(255, 255, 255, 0.95);
+        border: 2px solid rgba(56, 189, 248, 0.3);
+        border-radius: 16px;
+        padding: 1rem 1.5rem;
+        box-shadow: 0 8px 32px rgba(15, 118, 110, 0.15);
+        backdrop-filter: blur(10px);
+        z-index: 1000;
+        text-align: center;
+        min-width: 140px;
+      }
+      
+      .clock-time {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: #0F766E;
+        letter-spacing: 0.5px;
+        margin-bottom: 0.25rem;
+      }
+      
+      .clock-date {
+        font-size: 0.75rem;
+        color: #64748B;
+        font-weight: 500;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+      }
+      
+      @media (max-width: 600px) {
+        .mini-clock {
+          top: 1rem;
+          right: 1rem;
+          padding: 0.75rem 1rem;
+          min-width: 120px;
+        }
+        .clock-time {
+          font-size: 1.2rem;
+        }
+        .clock-date {
+          font-size: 0.65rem;
+        }
+      }
+      
       /* Add Note Button */
       .add-note-toggle {
         background: linear-gradient(135deg, #0F766E 0%, #38BDF8 100%);
@@ -382,6 +429,12 @@ HTML = """
     </style>
   </head>
   <body>
+    <!-- Mini Clock Widget -->
+    <div class="mini-clock">
+      <div class="clock-time" id="clockTime">00:00</div>
+      <div class="clock-date" id="clockDate">Loading...</div>
+    </div>
+    
     <div class="container">
       <div class="hero-header">
         <h1>✨ EchoNote</h1>
@@ -561,6 +614,31 @@ HTML = """
           alert('Link: ' + text);
         });
       }
+      
+      // Clock functionality
+      function updateClock() {
+        const now = new Date();
+        
+        // Format time (HH:MM)
+        const hours = String(now.getHours()).padStart(2, '0');
+        const minutes = String(now.getMinutes()).padStart(2, '0');
+        const timeString = hours + ':' + minutes;
+        
+        // Format date (e.g., "NOV 08, 2025")
+        const months = ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC'];
+        const month = months[now.getMonth()];
+        const day = String(now.getDate()).padStart(2, '0');
+        const year = now.getFullYear();
+        const dateString = month + ' ' + day + ', ' + year;
+        
+        // Update DOM
+        document.getElementById('clockTime').textContent = timeString;
+        document.getElementById('clockDate').textContent = dateString;
+      }
+      
+      // Update clock immediately and then every second
+      updateClock();
+      setInterval(updateClock, 1000);
     </script>
   </body>
 </html>"""
@@ -849,6 +927,12 @@ HOME_HTML = """
     </style>
   </head>
   <body>
+    <!-- Mini Clock Widget -->
+    <div class="mini-clock">
+      <div class="clock-time" id="clockTime">00:00</div>
+      <div class="clock-date" id="clockDate">Loading...</div>
+    </div>
+    
     <div class="container">
       <!-- Hero Section -->
       <div class="hero-section">
@@ -964,6 +1048,33 @@ HOME_HTML = """
         </div>
       </div>
     </div>
+    
+    <script>
+      // Clock functionality
+      function updateClock() {
+        const now = new Date();
+        
+        // Format time (HH:MM)
+        const hours = String(now.getHours()).padStart(2, '0');
+        const minutes = String(now.getMinutes()).padStart(2, '0');
+        const timeString = hours + ':' + minutes;
+        
+        // Format date (e.g., "NOV 08, 2025")
+        const months = ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC'];
+        const month = months[now.getMonth()];
+        const day = String(now.getDate()).padStart(2, '0');
+        const year = now.getFullYear();
+        const dateString = month + ' ' + day + ', ' + year;
+        
+        // Update DOM
+        document.getElementById('clockTime').textContent = timeString;
+        document.getElementById('clockDate').textContent = dateString;
+      }
+      
+      // Update clock immediately and then every second
+      updateClock();
+      setInterval(updateClock, 1000);
+    </script>
   </body>
 </html>
 """
@@ -1037,57 +1148,47 @@ Return in the exact format shown above."""
 
 
 def classify_task_importance(text):
-  """Classify task as important or non-important using AI"""
+  """Classify task as important or non-important using keyword matching"""
   try:
-    prompt = f"""Classify this task as either "important" or "non-important".
-
-IMPORTANT tasks include:
-- Family functions, family events, family gatherings
-- Office meetings, work meetings, business meetings
-- Medical appointments, doctor visits
-- Important deadlines, urgent work
-- Celebrations, weddings, parties
-
-NON-IMPORTANT tasks include:
-- Shopping, buying items, groceries
-- General errands, routine tasks
-- Personal reminders, casual notes
-- Chores, household tasks
-
-Task: {text}
-
-Respond with ONLY one word: "important" or "non-important"."""
-
-    response = openai_client.chat.completions.create(model="gpt-3.5-turbo",
-                                                     messages=[{
-                                                         "role":
-                                                         "user",
-                                                         "content":
-                                                         prompt
-                                                     }],
-                                                     temperature=0,
-                                                     max_tokens=10)
-
-    result = response.choices[0].message.content
-    if not result:
-      return "non-important"
-
-    # Normalize response: remove hyphens and extra spaces
-    result = result.strip().lower().replace("-", " ").replace("  ", " ")
-
-    # Check for exact matches
-    if result == "important":
+    text_lower = text.lower()
+    
+    # Define important keywords
+    important_keywords = [
+        'meeting', 'office', 'work', 'business', 'conference', 'appointment',
+        'doctor', 'hospital', 'medical', 'health', 'clinic', 'checkup',
+        'family', 'wedding', 'birthday', 'anniversary', 'celebration', 'party',
+        'interview', 'presentation', 'deadline', 'urgent', 'important',
+        'exam', 'test', 'school', 'college', 'university', 'class',
+        'court', 'legal', 'lawyer', 'bank', 'loan', 'visa', 'passport'
+    ]
+    
+    # Define non-important keywords
+    non_important_keywords = [
+        'shopping', 'shop', 'buy', 'purchase', 'grocery', 'groceries',
+        'vegetable', 'vegetables', 'fruit', 'fruits', 'market', 'store',
+        'chore', 'clean', 'laundry', 'wash', 'dishes', 'sweep',
+        'errand', 'routine', 'reminder', 'note', 'memo'
+    ]
+    
+    # Count matches
+    important_count = sum(1 for keyword in important_keywords if keyword in text_lower)
+    non_important_count = sum(1 for keyword in non_important_keywords if keyword in text_lower)
+    
+    # Classification logic
+    if important_count > non_important_count:
+      print(f"Classified as 'important': {text} (score: {important_count} vs {non_important_count})")
       return "important"
-    elif "non important" in result or "not important" in result:
+    elif non_important_count > important_count:
+      print(f"Classified as 'non-important': {text} (score: {non_important_count} vs {important_count})")
       return "non-important"
-    elif "important" in result:
-      return "important"
     else:
-      return "non-important"
-
+      # Default to important if unclear (conservative approach)
+      print(f"Classified as 'important' (default): {text}")
+      return "important"
+    
   except Exception as e:
     print(f"Error classifying importance: {e}")
-    return "non-important"
+    return "important"  # Default to important on error
 
 
 def get_calendar_service():
