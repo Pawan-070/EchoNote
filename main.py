@@ -52,14 +52,14 @@ HTML = """
         padding: 2rem;
       }
       .todo-item {
-        background: linear-gradient(135deg, #fef08a 0%, #fde047 100%);
+        background: linear-gradient(135deg, #e0e7ff 0%, #c7d2fe 100%);
         border: none;
-        border-left: 5px solid #eab308;
+        border-left: 5px solid #6366f1;
         border-radius: 12px;
         padding: 1rem 1.5rem;
         margin-bottom: 1rem;
-        transition: all 0.3s ease;
-        animation: fadeIn 0.5s ease-out backwards;
+        transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        animation: fadeIn 0.6s cubic-bezier(0.4, 0, 0.2, 1) backwards;
         display: flex;
         align-items: center;
         gap: 1rem;
@@ -73,22 +73,27 @@ HTML = """
         color: #6b7280;
       }
       .todo-item:hover {
-        transform: translateX(5px);
-        box-shadow: 0 5px 20px rgba(59, 130, 246, 0.5);
+        transform: translateX(8px) scale(1.02);
+        box-shadow: 0 8px 25px rgba(99, 102, 241, 0.4);
       }
       @keyframes fadeIn {
-        from { opacity: 0; transform: translateX(-20px); }
-        to { opacity: 1; transform: translateX(0); }
+        from { opacity: 0; transform: translateY(20px) scale(0.95); }
+        to { opacity: 1; transform: translateY(0) scale(1); }
       }
       .todo-checkbox {
         width: 24px;
         height: 24px;
         cursor: pointer;
         flex-shrink: 0;
+        transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      }
+      .todo-checkbox:hover {
+        transform: scale(1.15);
       }
       .todo-text {
         flex: 1;
         font-size: 1rem;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
       }
       .delete-btn {
         background: #ef4444;
@@ -98,12 +103,15 @@ HTML = """
         padding: 0.4rem 0.8rem;
         cursor: pointer;
         font-size: 0.9rem;
-        transition: all 0.2s ease;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         flex-shrink: 0;
       }
       .delete-btn:hover {
         background: #dc2626;
-        transform: scale(1.05);
+        transform: scale(1.1) rotate(-3deg);
+      }
+      .delete-btn:active {
+        transform: scale(0.95);
       }
       .add-note-section {
         background: linear-gradient(135deg, #e0f2fe 0%, #bae6fd 100%);
@@ -111,6 +119,10 @@ HTML = """
         padding: 1.5rem;
         margin-bottom: 1.5rem;
         border-left: 5px solid #0ea5e9;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      }
+      .add-note-section:hover {
+        box-shadow: 0 4px 15px rgba(6, 182, 212, 0.2);
       }
       .add-note-input {
         width: 100%;
@@ -119,10 +131,13 @@ HTML = """
         border-radius: 8px;
         font-size: 1rem;
         margin-bottom: 0.8rem;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
       }
       .add-note-input:focus {
         outline: none;
         border-color: #0284c7;
+        box-shadow: 0 0 0 4px rgba(6, 182, 212, 0.1);
+        transform: scale(1.01);
       }
       .add-btn {
         background: linear-gradient(135deg, #06b6d4 0%, #0ea5e9 100%);
@@ -133,12 +148,15 @@ HTML = """
         font-size: 1rem;
         font-weight: bold;
         cursor: pointer;
-        transition: all 0.3s ease;
+        transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
         width: 100%;
       }
       .add-btn:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 4px 12px rgba(6, 182, 212, 0.5);
+        transform: translateY(-3px) scale(1.02);
+        box-shadow: 0 6px 20px rgba(6, 182, 212, 0.5);
+      }
+      .add-btn:active {
+        transform: translateY(0) scale(0.98);
       }
       .share-btn {
         background: linear-gradient(135deg, #8b5cf6 0%, #6366f1 100%);
@@ -149,17 +167,17 @@ HTML = """
         font-size: 1.1rem;
         font-weight: bold;
         cursor: pointer;
-        transition: all 0.3s ease;
+        transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
         box-shadow: 0 4px 15px rgba(139, 92, 246, 0.4);
         width: 100%;
         margin-top: 1rem;
       }
       .share-btn:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 6px 20px rgba(139, 92, 246, 0.6);
+        transform: translateY(-3px) scale(1.02);
+        box-shadow: 0 8px 25px rgba(139, 92, 246, 0.6);
       }
       .share-btn:active {
-        transform: translateY(0);
+        transform: translateY(0) scale(0.98);
       }
       .copy-notification {
         position: fixed;
@@ -557,7 +575,7 @@ def transcribe_with_assemblyai(audio_file_path):
             raise Exception(f"Transcription failed: {result.get('error')}")
         
         print(f"Status: {status}... waiting")
-        time.sleep(2)
+        time.sleep(1)
     
     raise Exception("Transcription timed out")
 
@@ -578,7 +596,7 @@ def webhook():
 
     def job():
         try:
-            time.sleep(5)
+            time.sleep(1)
             print(f"Downloading audio from: {url}")
             auth = (os.getenv("TWILIO_SID"), os.getenv("TWILIO_TOKEN"))
             audio_response = requests.get(url, auth=auth, timeout=30)
