@@ -96,22 +96,27 @@ HTML = """
         transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
       }
       .delete-btn {
-        background: #ef4444;
-        color: white;
+        background: transparent;
+        color: #9ca3af;
         border: none;
-        border-radius: 8px;
-        padding: 0.4rem 0.8rem;
+        border-radius: 50%;
+        padding: 0.5rem;
         cursor: pointer;
-        font-size: 0.9rem;
+        font-size: 1.2rem;
         transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         flex-shrink: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
       }
       .delete-btn:hover {
-        background: #dc2626;
-        transform: scale(1.1) rotate(-3deg);
+        background: rgba(239, 68, 68, 0.1);
+        color: #ef4444;
+        transform: scale(1.15) rotate(-5deg);
       }
       .delete-btn:active {
-        transform: scale(0.95);
+        transform: scale(0.9);
+        background: rgba(239, 68, 68, 0.2);
       }
       .add-note-section {
         background: linear-gradient(135deg, #e0f2fe 0%, #bae6fd 100%);
