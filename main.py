@@ -247,16 +247,6 @@ HTML = """
         <h1>🎙️ Your Voice Plans</h1>
       </div>
       <div class="content-section">
-        <div class="notice-box">
-          <h6>💡 Tips for Better Voice Notes</h6>
-          <ul>
-            <li>Speak slowly and steadily for accurate transcription</li>
-            <li>Pause briefly between sentences</li>
-            <li>Record in a quiet environment</li>
-            <li>Speak clearly and avoid mumbling</li>
-          </ul>
-        </div>
-
         <div class="add-note-section">
           <h5 style="margin: 0 0 1rem 0; color: #0c4a6e;">✏️ Add New Note</h5>
           <input type="text" id="newNoteInput" class="add-note-input" placeholder="Type what you forgot to say...">
