@@ -1,4 +1,4 @@
-<img width="1024" height="1024" alt="ChatGPT Image Nov 8, 2025, 01_05_29 PM" src="https://github.com/user-attachments/assets/22cb2747-07ac-4041-a341-93276ea49f9f" /># 🎙️ Voice Plans App
+<img width="200" height="200" alt="ChatGPT Image Nov 8, 2025, 01_05_29 PM" src="https://github.com/user-attachments/assets/22cb2747-07ac-4041-a341-93276ea49f9f" /># 🎙️ Voice Plans App
 
 ![App Icon](ChatGPT Image Nov 8, 2025, 01_05_29 PM.png…)
 )
