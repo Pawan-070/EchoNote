@@ -92,7 +92,7 @@ def transcribe_with_assemblyai(audio_file_path):
     print("Starting transcription...")
     transcription_payload = {
         "audio_url": audio_url,
-        "language_detection": True
+        "language_code": "en"
     }
     
     transcription_response = requests.post(
