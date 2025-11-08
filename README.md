@@ -1,6 +1,6 @@
 # Voice Plans App
 
-![App Icon](Uploading WhatsApp Image 2025-11-08 at 22.35.03.jpeg…)
+![App Icon](WhatsApp Image 2025-11-08 at 22.35.03.jpeg)
 )
 
 **Speak once. Get a plan.**  
