@@ -1,4 +1,3 @@
-
 from flask import Flask, request, render_template_string
 from twilio.twiml.messaging_response import MessagingResponse
 from twilio.rest import Client
@@ -52,7 +51,7 @@ HOME_HTML = """
         <ol>
           <li>Send a voice note to your Twilio WhatsApp number</li>
           <li>The app transcribes it using OpenAI Whisper</li>
-          <li>Get a shareable to-do list link in 2 minutes</li>
+          <li>Get a shareable to-do list link shortly!</li>
         </ol>
         
         <div class="alert alert-info mt-4">
@@ -83,23 +82,57 @@ def webhook():
 
     url = request.form["MediaUrl0"]
     who = request.form["From"]
+    host = request.host
 
     def job():
-        time.sleep(120)  
-        audio = requests.get(url).content
-        with tempfile.NamedTemporaryFile(suffix=".ogg") as f1:
-            f1.write(audio); f1.flush()
-            with tempfile.NamedTemporaryFile(suffix=".wav") as f2:
-                subprocess.run(["ffmpeg","-y","-i",f1.name,"-ar","16000","-ac","1",f2.name], check=True)
-                text = openai.audio.transcriptions.create(model="whisper-1", file=open(f2.name,"rb")).text
-        lines = [x.strip() for x in text.replace(". ",".\n").split("\n") if x.strip()]
-        id = str(uuid.uuid4())[:8]
-        notes[id] = lines
-        link = f"https://{request.host}/view/{id}"
-        twilio.messages.create(from_="whatsapp:+14155238886", to=who, body=f"Done! Open your list:\n{link}")
+        try:
+            time.sleep(5)
+            print(f"Downloading audio from: {url}")
+            auth = (os.getenv("TWILIO_SID"), os.getenv("TWILIO_TOKEN"))
+            audio_response = requests.get(url, auth=auth, timeout=30)
+            audio_response.raise_for_status()
+            audio = audio_response.content
+            
+            print(f"Downloaded {len(audio)} bytes")
+            
+            with tempfile.NamedTemporaryFile(suffix=".ogg", delete=False) as f1:
+                f1.write(audio)
+                f1.flush()
+                temp_ogg = f1.name
+            
+            with tempfile.NamedTemporaryFile(suffix=".wav", delete=False) as f2:
+                temp_wav = f2.name
+            
+            print(f"Converting audio: {temp_ogg} -> {temp_wav}")
+            subprocess.run(["ffmpeg","-y","-i",temp_ogg,"-ar","16000","-ac","1",temp_wav], check=True, capture_output=True)
+            
+            print("Transcribing with OpenAI...")
+            with open(temp_wav, "rb") as audio_file:
+                text = openai.audio.transcriptions.create(model="whisper-1", file=audio_file).text
+            
+            os.unlink(temp_ogg)
+            os.unlink(temp_wav)
+            
+            print(f"Transcription: {text}")
+            lines = [x.strip() for x in text.replace(". ",".\n").split("\n") if x.strip()]
+            id = str(uuid.uuid4())[:8]
+            notes[id] = lines
+            link = f"https://{host}/view/{id}"
+            
+            print(f"Sending link to {who}")
+            twilio.messages.create(from_="whatsapp:+14155238886", to=who, body=f"Done! Open your list:\n{link}")
+            print("Success!")
+        except Exception as e:
+            print(f"Error processing voice note: {e}")
+            import traceback
+            traceback.print_exc()
+            try:
+                twilio.messages.create(from_="whatsapp:+14155238886", to=who, body=f"Sorry, there was an error processing your voice note.")
+            except:
+                pass
 
     threading.Thread(target=job).start()
-    resp.message("Recording… I’ll send the link in 2 minutes!")
+    resp.message("Processing your voice note... You'll get a link shortly!")
     return str(resp)
 
 @app.route("/view/<id>")
