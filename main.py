@@ -5,6 +5,7 @@ import os, time, uuid, requests, tempfile, threading
 from datetime import datetime, timedelta
 from dotenv import load_dotenv
 from openai import OpenAI
+
 load_dotenv()
 
 app = Flask(__name__)
@@ -967,11 +968,12 @@ HOME_HTML = """
 </html>
 """
 
+
 def extract_datetime_from_text(text):
-    """Extract date and time from text using OpenAI and return structured data"""
-    try:
-        today = datetime.now()
-        prompt = f"""Today is {today.strftime('%A, %B %d, %Y')} at {today.strftime('%H:%M')}.
+  """Extract date and time from text using OpenAI and return structured data"""
+  try:
+    today = datetime.now()
+    prompt = f"""Today is {today.strftime('%A, %B %d, %Y')} at {today.strftime('%H:%M')}.
 
 Extract the date and time mentioned in this text. Return in this exact format:
 DATE: YYYY-MM-DD
@@ -990,50 +992,54 @@ Text: {text}
 
 Return in the exact format shown above."""
 
-        response = openai_client.chat.completions.create(
-            model="gpt-3.5-turbo",
-            messages=[{"role": "user", "content": prompt}],
-            temperature=0,
-            max_tokens=50
-        )
-        
-        result = response.choices[0].message.content
-        if not result:
-            return None, None
-        
-        result = result.strip()
-        date_val = None
-        time_val = None
-        
-        # Parse the response
-        for line in result.split('\n'):
-            if line.startswith('DATE:'):
-                date_str = line.replace('DATE:', '').strip()
-                if date_str.lower() != 'none':
-                    try:
-                        datetime.strptime(date_str, '%Y-%m-%d')
-                        date_val = date_str
-                    except:
-                        pass
-            elif line.startswith('TIME:'):
-                time_str = line.replace('TIME:', '').strip()
-                if time_str.lower() != 'none':
-                    try:
-                        datetime.strptime(time_str, '%H:%M')
-                        time_val = time_str
-                    except:
-                        pass
-        
-        return date_val, time_val
-        
-    except Exception as e:
-        print(f"Error extracting datetime: {e}")
-        return None, None
+    response = openai_client.chat.completions.create(model="gpt-3.5-turbo",
+                                                     messages=[{
+                                                         "role":
+                                                         "user",
+                                                         "content":
+                                                         prompt
+                                                     }],
+                                                     temperature=0,
+                                                     max_tokens=50)
+
+    result = response.choices[0].message.content
+    if not result:
+      return None, None
+
+    result = result.strip()
+    date_val = None
+    time_val = None
+
+    # Parse the response
+    for line in result.split('\n'):
+      if line.startswith('DATE:'):
+        date_str = line.replace('DATE:', '').strip()
+        if date_str.lower() != 'none':
+          try:
+            datetime.strptime(date_str, '%Y-%m-%d')
+            date_val = date_str
+          except:
+            pass
+      elif line.startswith('TIME:'):
+        time_str = line.replace('TIME:', '').strip()
+        if time_str.lower() != 'none':
+          try:
+            datetime.strptime(time_str, '%H:%M')
+            time_val = time_str
+          except:
+            pass
+
+    return date_val, time_val
+
+  except Exception as e:
+    print(f"Error extracting datetime: {e}")
+    return None, None
+
 
 def classify_task_importance(text):
-    """Classify task as important or non-important using AI"""
-    try:
-        prompt = f"""Classify this task as either "important" or "non-important".
+  """Classify task as important or non-important using AI"""
+  try:
+    prompt = f"""Classify this task as either "important" or "non-important".
 
 IMPORTANT tasks include:
 - Family functions, family events, family gatherings
@@ -1052,227 +1058,233 @@ Task: {text}
 
 Respond with ONLY one word: "important" or "non-important"."""
 
-        response = openai_client.chat.completions.create(
-            model="gpt-3.5-turbo",
-            messages=[{"role": "user", "content": prompt}],
-            temperature=0,
-            max_tokens=10
-        )
-        
-        result = response.choices[0].message.content
-        if not result:
-            return "non-important"
-            
-        # Normalize response: remove hyphens and extra spaces
-        result = result.strip().lower().replace("-", " ").replace("  ", " ")
-        
-        # Check for exact matches
-        if result == "important":
-            return "important"
-        elif "non important" in result or "not important" in result:
-            return "non-important"
-        elif "important" in result:
-            return "important"
-        else:
-            return "non-important"
-        
-    except Exception as e:
-        print(f"Error classifying importance: {e}")
-        return "non-important"
+    response = openai_client.chat.completions.create(model="gpt-3.5-turbo",
+                                                     messages=[{
+                                                         "role":
+                                                         "user",
+                                                         "content":
+                                                         prompt
+                                                     }],
+                                                     temperature=0,
+                                                     max_tokens=10)
+
+    result = response.choices[0].message.content
+    if not result:
+      return "non-important"
+
+    # Normalize response: remove hyphens and extra spaces
+    result = result.strip().lower().replace("-", " ").replace("  ", " ")
+
+    # Check for exact matches
+    if result == "important":
+      return "important"
+    elif "non important" in result or "not important" in result:
+      return "non-important"
+    elif "important" in result:
+      return "important"
+    else:
+      return "non-important"
+
+  except Exception as e:
+    print(f"Error classifying importance: {e}")
+    return "non-important"
+
 
 def get_calendar_service():
-    """Get authenticated Google Calendar service (non-blocking)"""
-    try:
-        import pickle
-        from google.oauth2.credentials import Credentials
-        from google.auth.transport.requests import Request
-        from googleapiclient.discovery import build
-        
-        # Only proceed if we already have valid credentials
-        if not os.path.exists('token.pickle'):
-            print("token.pickle not found. Run /auth endpoint first to authenticate.")
-            return None
-        
-        with open('token.pickle', 'rb') as token:
-            creds = pickle.load(token)
-        
-        # Refresh if expired
-        if creds and creds.expired and creds.refresh_token:
-            creds.refresh(Request())
-            with open('token.pickle', 'wb') as token:
-                pickle.dump(creds, token)
-        
-        if not creds or not creds.valid:
-            print("Credentials invalid. Re-authenticate at /auth endpoint.")
-            return None
-        
-        return build('calendar', 'v3', credentials=creds)
-    except Exception as e:
-        print(f"Error getting calendar service: {e}")
-        return None
+  """Get authenticated Google Calendar service (non-blocking)"""
+  try:
+    import pickle
+    from google.oauth2.credentials import Credentials
+    from google.auth.transport.requests import Request
+    from googleapiclient.discovery import build
 
-def create_calendar_event(task_text, date_str, time_str=None, timezone='America/New_York'):
-    """Create a Google Calendar event for a task"""
-    try:
-        service = get_calendar_service()
-        if not service:
-            print("Calendar service not available")
-            return False
-        
-        # Build event time
-        if time_str:
-            start_datetime = f"{date_str}T{time_str}:00"
-            # Default 1-hour duration
-            end_time = datetime.strptime(time_str, '%H:%M') + timedelta(hours=1)
-            end_datetime = f"{date_str}T{end_time.strftime('%H:%M')}:00"
-            
-            event = {
-                'summary': task_text,
-                'start': {
-                    'dateTime': start_datetime,
-                    'timeZone': timezone,
-                },
-                'end': {
-                    'dateTime': end_datetime,
-                    'timeZone': timezone,
-                },
-                'description': 'Created from EchoNote'
-            }
-        else:
-            # All-day event - end date must be next day (exclusive)
-            end_date = (datetime.strptime(date_str, '%Y-%m-%d') + timedelta(days=1)).strftime('%Y-%m-%d')
-            event = {
-                'summary': task_text,
-                'start': {
-                    'date': date_str,
-                },
-                'end': {
-                    'date': end_date,
-                },
-                'description': 'Created from EchoNote'
-            }
-        
-        created_event = service.events().insert(calendarId='primary', body=event).execute()
-        print(f"✓ Calendar event created: {created_event.get('htmlLink')}")
-        return True
-        
-    except Exception as e:
-        print(f"✗ Error creating calendar event: {e}")
-        return False
+    # Only proceed if we already have valid credentials
+    if not os.path.exists('token.pickle'):
+      print(
+          "token.pickle not found. Run /auth endpoint first to authenticate.")
+      return None
+
+    with open('token.pickle', 'rb') as token:
+      creds = pickle.load(token)
+
+    # Refresh if expired
+    if creds and creds.expired and creds.refresh_token:
+      creds.refresh(Request())
+      with open('token.pickle', 'wb') as token:
+        pickle.dump(creds, token)
+
+    if not creds or not creds.valid:
+      print("Credentials invalid. Re-authenticate at /auth endpoint.")
+      return None
+
+    return build('calendar', 'v3', credentials=creds)
+  except Exception as e:
+    print(f"Error getting calendar service: {e}")
+    return None
+
+
+def create_calendar_event(task_text,
+                          date_str,
+                          time_str=None,
+                          timezone='America/New_York'):
+  """Create a Google Calendar event for a task"""
+  try:
+    service = get_calendar_service()
+    if not service:
+      print("Calendar service not available")
+      return False
+
+    # Build event time
+    if time_str:
+      start_datetime = f"{date_str}T{time_str}:00"
+      # Default 1-hour duration
+      end_time = datetime.strptime(time_str, '%H:%M') + timedelta(hours=1)
+      end_datetime = f"{date_str}T{end_time.strftime('%H:%M')}:00"
+
+      event = {
+          'summary': task_text,
+          'start': {
+              'dateTime': start_datetime,
+              'timeZone': timezone,
+          },
+          'end': {
+              'dateTime': end_datetime,
+              'timeZone': timezone,
+          },
+          'description': 'Created from EchoNote'
+      }
+    else:
+      # All-day event - end date must be next day (exclusive)
+      end_date = (datetime.strptime(date_str, '%Y-%m-%d') +
+                  timedelta(days=1)).strftime('%Y-%m-%d')
+      event = {
+          'summary': task_text,
+          'start': {
+              'date': date_str,
+          },
+          'end': {
+              'date': end_date,
+          },
+          'description': 'Created from EchoNote'
+      }
+
+    created_event = service.events().insert(calendarId='primary',
+                                            body=event).execute()
+    print(f"✓ Calendar event created: {created_event.get('htmlLink')}")
+    return True
+
+  except Exception as e:
+    print(f"✗ Error creating calendar event: {e}")
+    return False
+
 
 def check_and_send_reminders():
-    """Check for due tasks and send WhatsApp reminders"""
-    from datetime import datetime
-    today = datetime.now().date().isoformat()
-    
-    for note_id, items in notes.items():
-        phone_number = note_owners.get(note_id)
-        if not phone_number:
-            continue
-            
-        due_tasks = []
-        for item in items:
-            if item.get("date") == today and not item.get("completed"):
-                due_tasks.append(item["text"])
-        
-        if due_tasks:
-            message = "🔔 Reminder! You have tasks due today:\n\n"
-            for i, task in enumerate(due_tasks, 1):
-                message += f"{i}. {task}\n"
-            
-            try:
-                twilio.messages.create(
-                    from_="whatsapp:+14155238886",
-                    to=phone_number,
-                    body=message
-                )
-                print(f"Sent reminder to {phone_number} for {len(due_tasks)} tasks")
-            except Exception as e:
-                print(f"Failed to send reminder: {e}")
+  """Check for due tasks and send WhatsApp reminders"""
+  from datetime import datetime
+  today = datetime.now().date().isoformat()
+
+  for note_id, items in notes.items():
+    phone_number = note_owners.get(note_id)
+    if not phone_number:
+      continue
+
+    due_tasks = []
+    for item in items:
+      if item.get("date") == today and not item.get("completed"):
+        due_tasks.append(item["text"])
+
+    if due_tasks:
+      message = "🔔 Reminder! You have tasks due today:\n\n"
+      for i, task in enumerate(due_tasks, 1):
+        message += f"{i}. {task}\n"
+
+      try:
+        twilio.messages.create(from_="whatsapp:+14155238886",
+                               to=phone_number,
+                               body=message)
+        print(f"Sent reminder to {phone_number} for {len(due_tasks)} tasks")
+      except Exception as e:
+        print(f"Failed to send reminder: {e}")
+
 
 def reminder_loop():
-    """Background thread that checks for reminders every hour"""
-    import time
-    while True:
-        try:
-            check_and_send_reminders()
-        except Exception as e:
-            print(f"Error in reminder loop: {e}")
-        time.sleep(3600)  # Check every hour
+  """Background thread that checks for reminders every hour"""
+  import time
+  while True:
+    try:
+      check_and_send_reminders()
+    except Exception as e:
+      print(f"Error in reminder loop: {e}")
+    time.sleep(3600)  # Check every hour
+
 
 def transcribe_with_assemblyai(audio_file_path):
-    api_key = os.getenv("ASSEMBLYAI_API_KEY")
-    
-    headers = {
-        "authorization": api_key
-    }
-    
-    print("Uploading audio to AssemblyAI...")
-    with open(audio_file_path, "rb") as audio_file:
-        upload_response = requests.post(
-            "https://api.assemblyai.com/v2/upload",
-            headers=headers,
-            data=audio_file,
-            timeout=60
-        )
-        
-        if upload_response.status_code != 200:
-            raise Exception(f"Upload failed: {upload_response.text}")
-        
-        audio_url = upload_response.json()["upload_url"]
-        print(f"Audio uploaded: {audio_url}")
-    
-    print("Starting transcription...")
-    transcription_payload = {
-        "audio_url": audio_url,
-        "language_code": "en"
-    }
-    
-    transcription_response = requests.post(
-        "https://api.assemblyai.com/v2/transcript",
-        headers=headers,
-        json=transcription_payload,
-        timeout=60
-    )
-    
-    if transcription_response.status_code != 200:
-        raise Exception(f"Transcription request failed: {transcription_response.text}")
-    
-    transcript_id = transcription_response.json()["id"]
-    print(f"Transcription ID: {transcript_id}")
-    print("Waiting for transcription to complete...")
-    
-    polling_url = f"https://api.assemblyai.com/v2/transcript/{transcript_id}"
-    
-    max_attempts = 60
-    for attempt in range(max_attempts):
-        polling_response = requests.get(polling_url, headers=headers, timeout=30)
-        result = polling_response.json()
-        
-        status = result["status"]
-        
-        if status == "completed":
-            print("Transcription complete!")
-            return result["text"]
-        elif status == "error":
-            raise Exception(f"Transcription failed: {result.get('error')}")
-        
-        print(f"Status: {status}... waiting")
-        time.sleep(1)
-    
-    raise Exception("Transcription timed out")
+  api_key = os.getenv("ASSEMBLYAI_API_KEY")
+
+  headers = {"authorization": api_key}
+
+  print("Uploading audio to AssemblyAI...")
+  with open(audio_file_path, "rb") as audio_file:
+    upload_response = requests.post("https://api.assemblyai.com/v2/upload",
+                                    headers=headers,
+                                    data=audio_file,
+                                    timeout=60)
+
+    if upload_response.status_code != 200:
+      raise Exception(f"Upload failed: {upload_response.text}")
+
+    audio_url = upload_response.json()["upload_url"]
+    print(f"Audio uploaded: {audio_url}")
+
+  print("Starting transcription...")
+  transcription_payload = {"audio_url": audio_url, "language_code": "en"}
+
+  transcription_response = requests.post(
+      "https://api.assemblyai.com/v2/transcript",
+      headers=headers,
+      json=transcription_payload,
+      timeout=60)
+
+  if transcription_response.status_code != 200:
+    raise Exception(
+        f"Transcription request failed: {transcription_response.text}")
+
+  transcript_id = transcription_response.json()["id"]
+  print(f"Transcription ID: {transcript_id}")
+  print("Waiting for transcription to complete...")
+
+  polling_url = f"https://api.assemblyai.com/v2/transcript/{transcript_id}"
+
+  max_attempts = 60
+  for attempt in range(max_attempts):
+    polling_response = requests.get(polling_url, headers=headers, timeout=30)
+    result = polling_response.json()
+
+    status = result["status"]
+
+    if status == "completed":
+      print("Transcription complete!")
+      return result["text"]
+    elif status == "error":
+      raise Exception(f"Transcription failed: {result.get('error')}")
+
+    print(f"Status: {status}... waiting")
+    time.sleep(1)
+
+  raise Exception("Transcription timed out")
+
 
 @app.route("/auth")
 def authenticate_calendar():
-    """Start Google Calendar OAuth flow"""
-    try:
-        from google_auth_oauthlib.flow import Flow
-        from flask import session
-        
-        SCOPES = ['https://www.googleapis.com/auth/calendar']
-        
-        if not os.path.exists('credentials.json'):
-            return """
+  """Start Google Calendar OAuth flow"""
+  try:
+    from google_auth_oauthlib.flow import Flow
+    from flask import session
+
+    SCOPES = ['https://www.googleapis.com/auth/calendar']
+
+    if not os.path.exists('credentials.json'):
+      return """
             <html>
             <body style="font-family: Arial; padding: 40px; background: #fee2e2;">
                 <h2 style="color: #dc2626;">❌ credentials.json not found</h2>
@@ -1281,28 +1293,25 @@ def authenticate_calendar():
             </body>
             </html>
             """
-        
-        # Force HTTPS for redirect URI (Replit uses HTTPS)
-        redirect_uri = request.url_root.replace('http://', 'https://').rstrip('/') + '/auth/callback'
-        
-        # Create flow with proper redirect URI
-        flow = Flow.from_client_secrets_file(
-            'credentials.json',
-            scopes=SCOPES,
-            redirect_uri=redirect_uri
-        )
-        
-        # Generate authorization URL
-        authorization_url, state = flow.authorization_url(
-            access_type='offline',
-            include_granted_scopes='true'
-        )
-        
-        # Store state in Flask session
-        session['oauth_state'] = state
-        
-        # Redirect user to Google's OAuth page
-        return f"""
+
+    # Force HTTPS for redirect URI (Replit uses HTTPS)
+    redirect_uri = request.url_root.replace(
+        'http://', 'https://').rstrip('/') + '/auth/callback'
+
+    # Create flow with proper redirect URI
+    flow = Flow.from_client_secrets_file('credentials.json',
+                                         scopes=SCOPES,
+                                         redirect_uri=redirect_uri)
+
+    # Generate authorization URL
+    authorization_url, state = flow.authorization_url(
+        access_type='offline', include_granted_scopes='true')
+
+    # Store state in Flask session
+    session['oauth_state'] = state
+
+    # Redirect user to Google's OAuth page
+    return f"""
         <html>
         <head>
             <meta http-equiv="refresh" content="0; url={authorization_url}">
@@ -1313,9 +1322,9 @@ def authenticate_calendar():
         </body>
         </html>
         """
-        
-    except Exception as e:
-        return f"""
+
+  except Exception as e:
+    return f"""
         <html>
         <body style="font-family: Arial; padding: 40px; background: #fef2f2;">
             <h2 style="color: #dc2626;">❌ Error starting authentication</h2>
@@ -1325,21 +1334,22 @@ def authenticate_calendar():
         </html>
         """
 
+
 @app.route("/auth/callback")
 def auth_callback():
-    """Handle OAuth callback from Google"""
-    try:
-        import pickle
-        from google_auth_oauthlib.flow import Flow
-        from googleapiclient.discovery import build
-        from flask import session
-        
-        SCOPES = ['https://www.googleapis.com/auth/calendar']
-        
-        # Get state from session
-        state = session.get('oauth_state')
-        if not state:
-            return """
+  """Handle OAuth callback from Google"""
+  try:
+    import pickle
+    from google_auth_oauthlib.flow import Flow
+    from googleapiclient.discovery import build
+    from flask import session
+
+    SCOPES = ['https://www.googleapis.com/auth/calendar']
+
+    # Get state from session
+    state = session.get('oauth_state')
+    if not state:
+      return """
             <html>
             <body style="font-family: Arial; padding: 40px; background: #fef2f2;">
                 <h2 style="color: #dc2626;">❌ Session expired</h2>
@@ -1347,34 +1357,33 @@ def auth_callback():
             </body>
             </html>
             """
-        
-        # Reconstruct the flow with the same redirect URI
-        redirect_uri = request.url_root.replace('http://', 'https://').rstrip('/') + '/auth/callback'
-        flow = Flow.from_client_secrets_file(
-            'credentials.json',
-            scopes=SCOPES,
-            state=state,
-            redirect_uri=redirect_uri
-        )
-        
-        # Exchange authorization code for credentials
-        # Force HTTPS in the authorization response URL
-        authorization_response = request.url.replace('http://', 'https://')
-        flow.fetch_token(authorization_response=authorization_response)
-        creds = flow.credentials
-        
-        # Save credentials
-        with open('token.pickle', 'wb') as token:
-            pickle.dump(creds, token)
-        
-        # Test the connection
-        service = build('calendar', 'v3', credentials=creds)
-        calendar = service.calendars().get(calendarId='primary').execute()
-        
-        # Clear session
-        session.pop('oauth_state', None)
-        
-        return f"""
+
+    # Reconstruct the flow with the same redirect URI
+    redirect_uri = request.url_root.replace(
+        'http://', 'https://').rstrip('/') + '/auth/callback'
+    flow = Flow.from_client_secrets_file('credentials.json',
+                                         scopes=SCOPES,
+                                         state=state,
+                                         redirect_uri=redirect_uri)
+
+    # Exchange authorization code for credentials
+    # Force HTTPS in the authorization response URL
+    authorization_response = request.url.replace('http://', 'https://')
+    flow.fetch_token(authorization_response=authorization_response)
+    creds = flow.credentials
+
+    # Save credentials
+    with open('token.pickle', 'wb') as token:
+      pickle.dump(creds, token)
+
+    # Test the connection
+    service = build('calendar', 'v3', credentials=creds)
+    calendar = service.calendars().get(calendarId='primary').execute()
+
+    # Clear session
+    session.pop('oauth_state', None)
+
+    return f"""
         <html>
         <body style="font-family: Arial; padding: 40px; background: #dcfce7;">
             <h2 style="color: #16a34a;">✅ Successfully connected to Google Calendar!</h2>
@@ -1384,9 +1393,9 @@ def auth_callback():
         </body>
         </html>
         """
-        
-    except Exception as e:
-        return f"""
+
+  except Exception as e:
+    return f"""
         <html>
         <body style="font-family: Arial; padding: 40px; background: #fef2f2;">
             <h2 style="color: #dc2626;">❌ Authentication failed</h2>
@@ -1396,22 +1405,24 @@ def auth_callback():
         </html>
         """
 
+
 @app.route("/")
 def home():
-    return render_template_string(HOME_HTML)
+  return render_template_string(HOME_HTML)
+
 
 @app.route("/webhook", methods=["POST"])
 def webhook():
-    resp = MessagingResponse()
-    if not request.form.get("NumMedia") == "1":
-        resp.message("Send ONE voice note")
-        return str(resp)
+  resp = MessagingResponse()
+  if not request.form.get("NumMedia") == "1":
+    resp.message("Send ONE voice note")
+    return str(resp)
 
-    url = request.form["MediaUrl0"]
-    who = request.form["From"]
-    host = request.host
-    
-    tips_message = """💡 *Tips for Better Voice Notes*
+  url = request.form["MediaUrl0"]
+  who = request.form["From"]
+  host = request.host
+
+  tips_message = """💡 *Tips for Better Voice Notes*
 
 📌 Speak slowly and steadily
 📌 Pause briefly between sentences
@@ -1419,128 +1430,150 @@ def webhook():
 📌 Speak clearly and avoid mumbling
 
 ⏳ Processing your voice note... You'll get your link shortly!"""
-    
-    resp.message(tips_message)
 
-    def job():
-        try:
-            time.sleep(1)
-            print(f"Downloading audio from: {url}")
-            twilio_sid = os.getenv("TWILIO_SID", "")
-            twilio_token = os.getenv("TWILIO_TOKEN", "")
-            audio_response = requests.get(url, auth=(twilio_sid, twilio_token), timeout=30)
-            audio_response.raise_for_status()
-            audio = audio_response.content
-            
-            print(f"Downloaded {len(audio)} bytes")
-            
-            with tempfile.NamedTemporaryFile(suffix=".wav", delete=False) as f:
-                f.write(audio)
-                f.flush()
-                temp_file = f.name
-            
-            print(f"Transcribing audio file: {temp_file}")
-            text = transcribe_with_assemblyai(temp_file)
-            
-            os.unlink(temp_file)
-            
-            print(f"Transcription: {text}")
-            lines = [x.strip() for x in text.replace(". ",".\n").split("\n") if x.strip()]
-            id = str(uuid.uuid4())[:8]
-            
-            # Extract dates, times, and importance from each line
-            tasks = []
-            for line in lines:
-                extracted_date, extracted_time = extract_datetime_from_text(line)
-                importance = classify_task_importance(line)
-                tasks.append({
-                    "text": line,
-                    "completed": False,
-                    "date": extracted_date,
-                    "time": extracted_time,
-                    "importance": importance
-                })
-                if extracted_date or extracted_time:
-                    print(f"Extracted date='{extracted_date}', time='{extracted_time}' from: {line}")
-                print(f"Classified as '{importance}': {line}")
-                
-                # Create Google Calendar event if date is present
-                if extracted_date:
-                    calendar_success = create_calendar_event(line, extracted_date, extracted_time)
-                    if calendar_success:
-                        print(f"✓ Added to Google Calendar: {line}")
-                    else:
-                        print(f"✗ Could not add to Google Calendar (not configured or error)")
+  resp.message(tips_message)
 
-            
-            notes[id] = tasks
-            note_owners[id] = who
-            link = f"https://{host}/view/{id}"
-            
-            print(f"Sending link to {who}")
-            try:
-                twilio.messages.create(from_="whatsapp:+14155238886", to=who, body=f"Done! Open your list:\n{link}")
-                print("Success! Link sent via WhatsApp")
-            except Exception as twilio_error:
-                print(f"⚠️ Twilio message failed: {twilio_error}")
-                print(f"✅ But your transcription is ready!")
-                print(f"🔗 YOUR LINK: {link}")
-                print(f"📋 Transcription: {text[:100]}...")
-        except Exception as e:
-            print(f"Error processing voice note: {e}")
-            import traceback
-            traceback.print_exc()
+  def job():
+    try:
+      time.sleep(1)
+      print(f"Downloading audio from: {url}")
+      twilio_sid = os.getenv("TWILIO_SID", "")
+      twilio_token = os.getenv("TWILIO_TOKEN", "")
+      audio_response = requests.get(url,
+                                    auth=(twilio_sid, twilio_token),
+                                    timeout=30)
+      audio_response.raise_for_status()
+      audio = audio_response.content
 
-    threading.Thread(target=job).start()
-    return str(resp)
+      print(f"Downloaded {len(audio)} bytes")
+
+      with tempfile.NamedTemporaryFile(suffix=".wav", delete=False) as f:
+        f.write(audio)
+        f.flush()
+        temp_file = f.name
+
+      print(f"Transcribing audio file: {temp_file}")
+      text = transcribe_with_assemblyai(temp_file)
+
+      os.unlink(temp_file)
+
+      print(f"Transcription: {text}")
+      lines = [
+          x.strip() for x in text.replace(". ", ".\n").split("\n")
+          if x.strip()
+      ]
+      id = str(uuid.uuid4())[:8]
+
+      # Extract dates, times, and importance from each line
+      tasks = []
+      for line in lines:
+        extracted_date, extracted_time = extract_datetime_from_text(line)
+        importance = classify_task_importance(line)
+        tasks.append({
+            "text": line,
+            "completed": False,
+            "date": extracted_date,
+            "time": extracted_time,
+            "importance": importance
+        })
+        if extracted_date or extracted_time:
+          print(
+              f"Extracted date='{extracted_date}', time='{extracted_time}' from: {line}"
+          )
+        print(f"Classified as '{importance}': {line}")
+
+        # Create Google Calendar event if date is present
+        if extracted_date:
+          calendar_success = create_calendar_event(line, extracted_date,
+                                                   extracted_time)
+          if calendar_success:
+            print(f"✓ Added to Google Calendar: {line}")
+          else:
+            print(
+                f"✗ Could not add to Google Calendar (not configured or error)"
+            )
+
+      notes[id] = tasks
+      note_owners[id] = who
+      link = f"https://{host}/view/{id}"
+
+      print(f"Sending link to {who}")
+      try:
+        twilio.messages.create(from_="whatsapp:+14155238886",
+                               to=who,
+                               body=f"Done! Open your list:\n{link}")
+        print("Success! Link sent via WhatsApp")
+      except Exception as twilio_error:
+        print(f"⚠️ Twilio message failed: {twilio_error}")
+        print(f"✅ But your transcription is ready!")
+        print(f"🔗 YOUR LINK: {link}")
+        print(f"📋 Transcription: {text[:100]}...")
+    except Exception as e:
+      print(f"Error processing voice note: {e}")
+      import traceback
+      traceback.print_exc()
+
+  threading.Thread(target=job).start()
+  return str(resp)
+
 
 @app.route("/view/<id>")
 def view(id):
-    items = notes.get(id, [])
-    return render_template_string(HTML, items=items, note_id=id)
+  items = notes.get(id, [])
+  return render_template_string(HTML, items=items, note_id=id)
+
 
 @app.route("/api/notes/<id>/add", methods=["POST"])
 def add_note(id):
-    if id not in notes:
-        return jsonify({"success": False, "error": "Note not found"}), 404
-    
-    data = request.get_json()
-    text = data.get("text", "").strip()
-    date = data.get("date", None)
-    
-    if not text:
-        return jsonify({"success": False, "error": "Text is required"}), 400
-    
-    importance = classify_task_importance(text)
-    notes[id].append({"text": text, "completed": False, "date": date if date else None, "time": None, "importance": importance})
-    return jsonify({"success": True})
+  if id not in notes:
+    return jsonify({"success": False, "error": "Note not found"}), 404
+
+  data = request.get_json()
+  text = data.get("text", "").strip()
+  date = data.get("date", None)
+
+  if not text:
+    return jsonify({"success": False, "error": "Text is required"}), 400
+
+  importance = classify_task_importance(text)
+  notes[id].append({
+      "text": text,
+      "completed": False,
+      "date": date if date else None,
+      "time": None,
+      "importance": importance
+  })
+  return jsonify({"success": True})
+
 
 @app.route("/api/notes/<id>/delete/<int:index>", methods=["POST"])
 def delete_note(id, index):
-    if id not in notes:
-        return jsonify({"success": False, "error": "Note not found"}), 404
-    
-    if index < 0 or index >= len(notes[id]):
-        return jsonify({"success": False, "error": "Invalid index"}), 400
-    
-    notes[id].pop(index)
-    return jsonify({"success": True})
+  if id not in notes:
+    return jsonify({"success": False, "error": "Note not found"}), 404
+
+  if index < 0 or index >= len(notes[id]):
+    return jsonify({"success": False, "error": "Invalid index"}), 400
+
+  notes[id].pop(index)
+  return jsonify({"success": True})
+
 
 @app.route("/api/notes/<id>/toggle/<int:index>", methods=["POST"])
 def toggle_note(id, index):
-    if id not in notes:
-        return jsonify({"success": False, "error": "Note not found"}), 404
-    
-    if index < 0 or index >= len(notes[id]):
-        return jsonify({"success": False, "error": "Invalid index"}), 400
-    
-    notes[id][index]["completed"] = not notes[id][index]["completed"]
-    return jsonify({"success": True})
+  if id not in notes:
+    return jsonify({"success": False, "error": "Note not found"}), 404
+
+  if index < 0 or index >= len(notes[id]):
+    return jsonify({"success": False, "error": "Invalid index"}), 400
+
+  notes[id][index]["completed"] = not notes[id][index]["completed"]
+  return jsonify({"success": True})
+
 
 if __name__ == "__main__":
-    # Start reminder background thread
-    reminder_thread = threading.Thread(target=reminder_loop, daemon=True)
-    reminder_thread.start()
-    print("Reminder system started!")
-    
-    app.run(host="0.0.0.0", port=5000)
+  # Start reminder background thread
+  reminder_thread = threading.Thread(target=reminder_loop, daemon=True)
+  reminder_thread.start()
+  print("Reminder system started!")
+
+  app.run(host="0.0.0.0", port=5000)
