@@ -1,4 +1,4 @@
-# MAGIC CODE – JUST PASTE IT
+
 from flask import Flask, request, render_template_string
 from twilio.twiml.messaging_response import MessagingResponse
 from twilio.rest import Client
@@ -35,6 +35,45 @@ HTML = """
 </html>
 """
 
+HOME_HTML = """
+<!doctype html>
+<html>
+  <head>
+    <title>Voice Notes App</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  </head>
+  <body class="bg-light p-5">
+    <div class="card mx-auto" style="max-width:600px;">
+      <div class="card-body">
+        <h1 class="text-center mb-4">🎙️ Voice Notes To-Do App</h1>
+        <p class="lead">Turn your voice notes into organized to-do lists!</p>
+        
+        <h5 class="mt-4">How it works:</h5>
+        <ol>
+          <li>Send a voice note to your Twilio WhatsApp number</li>
+          <li>The app transcribes it using OpenAI Whisper</li>
+          <li>Get a shareable to-do list link in 2 minutes</li>
+        </ol>
+        
+        <div class="alert alert-info mt-4">
+          <strong>Webhook URL:</strong><br>
+          <code>https://{{ request.host }}/webhook</code>
+          <p class="mb-0 mt-2"><small>Configure this in your Twilio WhatsApp Sandbox settings</small></p>
+        </div>
+        
+        <div class="alert alert-success mt-3">
+          <strong>✅ App Status:</strong> Running and ready to receive voice notes!
+        </div>
+      </div>
+    </div>
+  </body>
+</html>
+"""
+
+@app.route("/")
+def home():
+    return render_template_string(HOME_HTML)
+
 @app.route("/webhook", methods=["POST"])
 def webhook():
     resp = MessagingResponse()
@@ -46,8 +85,7 @@ def webhook():
     who = request.form["From"]
 
     def job():
-        time.sleep(120)  # 2-minute magic wait
-        # download
+        time.sleep(120)  
         audio = requests.get(url).content
         with tempfile.NamedTemporaryFile(suffix=".ogg") as f1:
             f1.write(audio); f1.flush()
@@ -68,4 +106,4 @@ def webhook():
 def view(id):
     return render_template_string(HTML, lines=notes.get(id, ["No notes yet"]))
 
-app.run(host="0.0.0.0", port=8080)
+app.run(host="0.0.0.0", port=5000)
