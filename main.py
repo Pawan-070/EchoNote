@@ -8,6 +8,7 @@ load_dotenv()
 app = Flask(__name__)
 twilio = Client(os.getenv("TWILIO_SID"), os.getenv("TWILIO_TOKEN"))
 notes = {}
+note_owners = {}
 
 HTML = """
 <!doctype html>
@@ -95,28 +96,50 @@ HTML = """
         font-size: 1rem;
         transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
       }
+      .todo-content {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        gap: 0.3rem;
+      }
+      .todo-date {
+        font-size: 0.85rem;
+        color: #ef4444;
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+        gap: 0.3rem;
+      }
+      .date-input {
+        padding: 0.4rem 0.6rem;
+        border: 1px solid #fca5a5;
+        border-radius: 6px;
+        font-size: 0.85rem;
+        color: #dc2626;
+        background: white;
+        cursor: pointer;
+        transition: all 0.2s ease;
+      }
+      .date-input:focus {
+        outline: none;
+        border-color: #ef4444;
+        box-shadow: 0 0 0 2px rgba(239, 68, 68, 0.1);
+      }
       .delete-btn {
         background: transparent;
         color: #9ca3af;
         border: none;
-        border-radius: 50%;
-        padding: 0.5rem;
+        padding: 0.3rem;
         cursor: pointer;
-        font-size: 1.2rem;
-        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        font-size: 1.1rem;
+        transition: color 0.2s ease;
         flex-shrink: 0;
-        display: flex;
-        align-items: center;
-        justify-content: center;
       }
       .delete-btn:hover {
-        background: rgba(239, 68, 68, 0.1);
         color: #ef4444;
-        transform: scale(1.15) rotate(-5deg);
       }
       .delete-btn:active {
-        transform: scale(0.9);
-        background: rgba(239, 68, 68, 0.2);
+        color: #dc2626;
       }
       .add-note-section {
         background: linear-gradient(135deg, #ffffff 0%, #fef2f2 100%);
@@ -250,6 +273,7 @@ HTML = """
         <div class="add-note-section">
           <h5 style="margin: 0 0 1rem 0; color: #991b1b;">✏️ Add New Note</h5>
           <input type="text" id="newNoteInput" class="add-note-input" placeholder="Type what you forgot to say...">
+          <input type="date" id="newNoteDate" class="add-note-input" style="margin-bottom: 0.8rem;">
           <button class="add-btn" onclick="addNote()">+ Add Note</button>
         </div>
 
@@ -258,7 +282,12 @@ HTML = """
             {% for item in items %}
               <div class="todo-item {% if item.completed %}completed{% endif %}" data-index="{{ loop.index0 }}">
                 <input type="checkbox" class="todo-checkbox" {% if item.completed %}checked{% endif %} onchange="toggleComplete({{ loop.index0 }})">
-                <span class="todo-text">{{ item.text }}</span>
+                <div class="todo-content">
+                  <span class="todo-text">{{ item.text }}</span>
+                  {% if item.date %}
+                    <span class="todo-date">📅 {{ item.date }}</span>
+                  {% endif %}
+                </div>
                 <button class="delete-btn" onclick="deleteNote({{ loop.index0 }})">🗑️</button>
               </div>
             {% endfor %}
@@ -284,7 +313,9 @@ HTML = """
 
       function addNote() {
         const input = document.getElementById('newNoteInput');
+        const dateInput = document.getElementById('newNoteDate');
         const text = input.value.trim();
+        const date = dateInput.value;
         
         if (!text) {
           alert('Please enter a note!');
@@ -294,7 +325,7 @@ HTML = """
         fetch(`/api/notes/${noteId}/add`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ text: text })
+          body: JSON.stringify({ text: text, date: date })
         })
         .then(response => response.json())
         .then(data => {
@@ -554,6 +585,46 @@ HOME_HTML = """
 </html>
 """
 
+def check_and_send_reminders():
+    """Check for due tasks and send WhatsApp reminders"""
+    from datetime import datetime
+    today = datetime.now().date().isoformat()
+    
+    for note_id, items in notes.items():
+        phone_number = note_owners.get(note_id)
+        if not phone_number:
+            continue
+            
+        due_tasks = []
+        for item in items:
+            if item.get("date") == today and not item.get("completed"):
+                due_tasks.append(item["text"])
+        
+        if due_tasks:
+            message = "🔔 Reminder! You have tasks due today:\n\n"
+            for i, task in enumerate(due_tasks, 1):
+                message += f"{i}. {task}\n"
+            
+            try:
+                twilio.messages.create(
+                    from_="whatsapp:+14155238886",
+                    to=phone_number,
+                    body=message
+                )
+                print(f"Sent reminder to {phone_number} for {len(due_tasks)} tasks")
+            except Exception as e:
+                print(f"Failed to send reminder: {e}")
+
+def reminder_loop():
+    """Background thread that checks for reminders every hour"""
+    import time
+    while True:
+        try:
+            check_and_send_reminders()
+        except Exception as e:
+            print(f"Error in reminder loop: {e}")
+        time.sleep(3600)  # Check every hour
+
 def transcribe_with_assemblyai(audio_file_path):
     api_key = os.getenv("ASSEMBLYAI_API_KEY")
     
@@ -666,7 +737,8 @@ def webhook():
             print(f"Transcription: {text}")
             lines = [x.strip() for x in text.replace(". ",".\n").split("\n") if x.strip()]
             id = str(uuid.uuid4())[:8]
-            notes[id] = [{"text": line, "completed": False} for line in lines]
+            notes[id] = [{"text": line, "completed": False, "date": None} for line in lines]
+            note_owners[id] = who
             link = f"https://{host}/view/{id}"
             
             print(f"Sending link to {who}")
@@ -698,11 +770,12 @@ def add_note(id):
     
     data = request.get_json()
     text = data.get("text", "").strip()
+    date = data.get("date", None)
     
     if not text:
         return jsonify({"success": False, "error": "Text is required"}), 400
     
-    notes[id].append({"text": text, "completed": False})
+    notes[id].append({"text": text, "completed": False, "date": date if date else None})
     return jsonify({"success": True})
 
 @app.route("/api/notes/<id>/delete/<int:index>", methods=["POST"])
@@ -728,4 +801,9 @@ def toggle_note(id, index):
     return jsonify({"success": True})
 
 if __name__ == "__main__":
+    # Start reminder background thread
+    reminder_thread = threading.Thread(target=reminder_loop, daemon=True)
+    reminder_thread.start()
+    print("Reminder system started!")
+    
     app.run(host="0.0.0.0", port=5000)
