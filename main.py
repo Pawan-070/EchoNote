@@ -475,168 +475,391 @@ HOME_HTML = """
 <!doctype html>
 <html>
   <head>
-    <title>Voice Plans App</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <title>Voice Plans - Flora Edition</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <style>
-      body {
-        background: linear-gradient(135deg, #fee2e2 0%, #fecaca 50%, #ef4444 100%);
-        min-height: 100vh;
-        padding: 2rem;
-        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
       }
-      .main-card {
+      
+      body {
+        background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 50%, #bbf7d0 100%);
+        min-height: 100vh;
+        padding: 2rem 1rem;
+        font-family: 'Inter', -apple-system, sans-serif;
+        color: #1e3a1e;
+      }
+      
+      .container {
+        max-width: 900px;
+        margin: 0 auto;
+      }
+      
+      /* Header with Flora Theme */
+      .hero-section {
+        background: linear-gradient(135deg, #059669 0%, #10b981 100%);
+        border-radius: 24px;
+        padding: 3rem 2rem;
+        text-align: center;
+        box-shadow: 0 20px 60px rgba(5, 150, 105, 0.25);
+        margin-bottom: 2rem;
+        position: relative;
+        overflow: hidden;
+      }
+      
+      .hero-section::before {
+        content: '🌿';
+        position: absolute;
+        font-size: 8rem;
+        opacity: 0.1;
+        top: -1rem;
+        left: 2rem;
+      }
+      
+      .hero-section::after {
+        content: '🍃';
+        position: absolute;
+        font-size: 6rem;
+        opacity: 0.1;
+        bottom: -1rem;
+        right: 2rem;
+      }
+      
+      .hero-section h1 {
+        font-size: 2.8rem;
+        font-weight: 700;
+        color: white;
+        margin-bottom: 0.5rem;
+        text-shadow: 0 2px 10px rgba(0,0,0,0.1);
+      }
+      
+      .hero-section p {
+        font-size: 1.2rem;
+        color: #d1fae5;
+        font-weight: 400;
+      }
+      
+      /* Section Container */
+      .section-card {
         background: white;
         border-radius: 20px;
-        box-shadow: 0 20px 60px rgba(0,0,0,0.3);
-        max-width: 700px;
-        margin: 0 auto;
-        animation: slideUp 0.6s ease-out;
-      }
-      @keyframes slideUp {
-        from { opacity: 0; transform: translateY(30px); }
-        to { opacity: 1; transform: translateY(0); }
-      }
-      .header-section {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        color: white;
-        padding: 3rem 2rem;
-        border-radius: 20px 20px 0 0;
-        text-align: center;
-      }
-      .header-section h1 {
-        font-size: 2.5rem;
-        font-weight: bold;
-        margin: 0 0 1rem 0;
-        text-shadow: 0 2px 4px rgba(0,0,0,0.2);
-        animation: pulse 2s ease-in-out infinite;
-      }
-      @keyframes pulse {
-        0%, 100% { transform: scale(1); }
-        50% { transform: scale(1.05); }
-      }
-      .header-section p {
-        font-size: 1.2rem;
-        margin: 0;
-        opacity: 0.95;
-      }
-      .content-section {
         padding: 2rem;
+        margin-bottom: 1.5rem;
+        box-shadow: 0 4px 20px rgba(5, 150, 105, 0.08);
+        border: 1px solid #d1fae5;
       }
-      .step-card {
-        background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%);
-        border-radius: 12px;
+      
+      .section-title {
+        font-size: 1.5rem;
+        font-weight: 600;
+        color: #047857;
+        margin-bottom: 1.5rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+      }
+      
+      .section-title::before {
+        content: '';
+        width: 4px;
+        height: 28px;
+        background: linear-gradient(180deg, #059669 0%, #10b981 100%);
+        border-radius: 2px;
+      }
+      
+      /* How It Works Steps */
+      .steps-container {
+        display: grid;
+        gap: 1rem;
+      }
+      
+      .step-item {
+        background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);
+        border-radius: 16px;
         padding: 1.5rem;
-        margin-bottom: 1rem;
+        border-left: 4px solid #10b981;
         transition: all 0.3s ease;
-        animation: fadeIn 0.5s ease-out backwards;
-        border-left: 4px solid #ef4444;
+        position: relative;
       }
-      .step-card:hover {
-        transform: translateY(-5px);
-        box-shadow: 0 8px 20px rgba(239, 68, 68, 0.4);
+      
+      .step-item:hover {
+        transform: translateX(8px);
+        box-shadow: 0 8px 24px rgba(16, 185, 129, 0.15);
       }
-      .step-card:nth-child(1) { animation-delay: 0.1s; }
-      .step-card:nth-child(2) { animation-delay: 0.2s; }
-      .step-card:nth-child(3) { animation-delay: 0.3s; }
-      @keyframes fadeIn {
-        from { opacity: 0; transform: translateY(20px); }
-        to { opacity: 1; transform: translateY(0); }
+      
+      .step-header {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        margin-bottom: 0.75rem;
       }
+      
       .step-number {
-        background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+        background: linear-gradient(135deg, #059669 0%, #10b981 100%);
         color: white;
-        width: 40px;
-        height: 40px;
+        width: 36px;
+        height: 36px;
         border-radius: 50%;
-        display: inline-flex;
+        display: flex;
         align-items: center;
         justify-content: center;
-        font-weight: bold;
-        font-size: 1.2rem;
-        margin-right: 1rem;
-        box-shadow: 0 4px 8px rgba(239, 68, 68, 0.4);
+        font-weight: 700;
+        font-size: 1rem;
+        box-shadow: 0 4px 12px rgba(5, 150, 105, 0.3);
       }
-      .info-box {
-        background: linear-gradient(135deg, #fef2f2 0%, #fee2e2 100%);
-        border-left: 4px solid #f87171;
-        border-radius: 12px;
+      
+      .step-title {
+        font-size: 1.1rem;
+        font-weight: 600;
+        color: #065f46;
+      }
+      
+      .step-description {
+        color: #374151;
+        font-size: 0.95rem;
+        line-height: 1.6;
+        margin-left: 3rem;
+      }
+      
+      /* Technical Setup Section */
+      .tech-box {
+        background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+        border-left: 4px solid #f59e0b;
+        border-radius: 16px;
         padding: 1.5rem;
-        margin: 1.5rem 0;
-        animation: fadeIn 0.5s ease-out 0.4s backwards;
+        margin-top: 1rem;
       }
-      .status-box {
-        background: linear-gradient(135deg, #ffffff 0%, #fef2f2 100%);
-        border-left: 4px solid #dc2626;
-        border-radius: 12px;
-        padding: 1.5rem;
-        margin: 1.5rem 0;
-        animation: fadeIn 0.5s ease-out 0.5s backwards;
+      
+      .tech-box h5 {
+        color: #92400e;
+        font-weight: 600;
+        margin-bottom: 0.75rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
       }
+      
       .webhook-url {
         background: #1e293b;
-        color: #fca5a5;
-        padding: 0.5rem 1rem;
-        border-radius: 8px;
+        color: #86efac;
+        padding: 0.75rem 1rem;
+        border-radius: 12px;
         font-family: 'Courier New', monospace;
-        font-size: 0.95rem;
+        font-size: 0.9rem;
         word-break: break-all;
-        margin: 0.5rem 0;
+        margin: 0.75rem 0;
+        display: block;
+        border: 2px solid #334155;
+      }
+      
+      /* Features Grid */
+      .features-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 1rem;
+        margin-top: 1rem;
+      }
+      
+      .feature-item {
+        background: linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%);
+        padding: 1.25rem;
+        border-radius: 12px;
+        border: 1px solid #a7f3d0;
+        transition: all 0.3s ease;
+      }
+      
+      .feature-item:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 8px 20px rgba(16, 185, 129, 0.15);
+      }
+      
+      .feature-icon {
+        font-size: 2rem;
+        margin-bottom: 0.5rem;
         display: block;
       }
-      strong {
-        color: #1e293b;
+      
+      .feature-title {
+        font-weight: 600;
+        color: #065f46;
+        margin-bottom: 0.25rem;
       }
-      .icon {
-        font-size: 1.5rem;
-        margin-right: 0.5rem;
+      
+      .feature-desc {
+        font-size: 0.85rem;
+        color: #374151;
+      }
+      
+      /* Status Indicator */
+      .status-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        background: linear-gradient(135deg, #059669 0%, #10b981 100%);
+        color: white;
+        padding: 0.5rem 1rem;
+        border-radius: 20px;
+        font-size: 0.9rem;
+        font-weight: 600;
+        box-shadow: 0 4px 12px rgba(5, 150, 105, 0.3);
+      }
+      
+      .status-dot {
+        width: 8px;
+        height: 8px;
+        background: #d1fae5;
+        border-radius: 50%;
+        animation: pulse 2s infinite;
+      }
+      
+      @keyframes pulse {
+        0%, 100% { opacity: 1; transform: scale(1); }
+        50% { opacity: 0.6; transform: scale(1.2); }
+      }
+      
+      /* Calendar Section */
+      .calendar-badge {
+        background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);
+        border: 2px solid #3b82f6;
+        border-radius: 12px;
+        padding: 1rem;
+        margin-top: 1rem;
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+      }
+      
+      .calendar-badge strong {
+        color: #1e40af;
+      }
+      
+      @media (max-width: 768px) {
+        .hero-section h1 {
+          font-size: 2rem;
+        }
+        
+        .features-grid {
+          grid-template-columns: 1fr;
+        }
       }
     </style>
   </head>
   <body>
-    <div class="main-card">
-      <div class="header-section">
-        <h1>🎙️ Voice Plans App</h1>
-        <p>Turn your voice notes into organized plans!</p>
+    <div class="container">
+      <!-- Hero Section -->
+      <div class="hero-section">
+        <h1>🌿 Voice Plans</h1>
+        <p>Transform your thoughts into organized plans, naturally</p>
       </div>
-      <div class="content-section">
-        <h4 style="color: #1e293b; margin-bottom: 1.5rem;">✨ How it works:</h4>
-        
-        <div class="step-card">
-          <span class="step-number">1</span>
-          <strong>Send a Voice Note</strong>
-          <p style="margin: 0.5rem 0 0 3.5rem; color: #4b5563;">
-            Record and send a voice message to your Twilio WhatsApp number
-          </p>
+      
+      <!-- How It Works -->
+      <div class="section-card">
+        <h2 class="section-title">How It Works</h2>
+        <div class="steps-container">
+          <div class="step-item">
+            <div class="step-header">
+              <div class="step-number">1</div>
+              <div class="step-title">🎤 Record Your Thoughts</div>
+            </div>
+            <p class="step-description">
+              Send a voice note via WhatsApp to your Twilio number. Speak naturally about your tasks and plans.
+            </p>
+          </div>
+          
+          <div class="step-item">
+            <div class="step-header">
+              <div class="step-number">2</div>
+              <div class="step-title">🤖 AI Transcription</div>
+            </div>
+            <p class="step-description">
+              Our AI transcribes your voice with AssemblyAI, extracts dates/times, and organizes everything automatically.
+            </p>
+          </div>
+          
+          <div class="step-item">
+            <div class="step-header">
+              <div class="step-number">3</div>
+              <div class="step-title">📋 Get Organized</div>
+            </div>
+            <p class="step-description">
+              Receive a beautiful shareable link with your tasks categorized and ready to manage!
+            </p>
+          </div>
         </div>
-        
-        <div class="step-card">
-          <span class="step-number">2</span>
-          <strong>AI Transcription</strong>
-          <p style="margin: 0.5rem 0 0 3.5rem; color: #4b5563;">
-            Our AI automatically transcribes your voice to text using AssemblyAI
-          </p>
+      </div>
+      
+      <!-- Features Section -->
+      <div class="section-card">
+        <h2 class="section-title">🌟 Features</h2>
+        <div class="features-grid">
+          <div class="feature-item">
+            <span class="feature-icon">✅</span>
+            <div class="feature-title">Smart Checkboxes</div>
+            <div class="feature-desc">Check off completed tasks with satisfying animations</div>
+          </div>
+          
+          <div class="feature-item">
+            <span class="feature-icon">📅</span>
+            <div class="feature-title">Date Detection</div>
+            <div class="feature-desc">AI extracts dates and times automatically</div>
+          </div>
+          
+          <div class="feature-item">
+            <span class="feature-icon">📂</span>
+            <div class="feature-title">Auto Categories</div>
+            <div class="feature-desc">Tasks organized by type for easy management</div>
+          </div>
+          
+          <div class="feature-item">
+            <span class="feature-icon">📆</span>
+            <div class="feature-title">Calendar Sync</div>
+            <div class="feature-desc">Google Calendar integration with smart scheduling</div>
+          </div>
+          
+          <div class="feature-item">
+            <span class="feature-icon">🔗</span>
+            <div class="feature-title">Shareable Links</div>
+            <div class="feature-desc">Unique URLs for every voice note</div>
+          </div>
+          
+          <div class="feature-item">
+            <span class="feature-icon">🌿</span>
+            <div class="feature-title">Flora Design</div>
+            <div class="feature-desc">Beautiful, calming interface</div>
+          </div>
         </div>
-        
-        <div class="step-card">
-          <span class="step-number">3</span>
-          <strong>Get Shareable Link</strong>
-          <p style="margin: 0.5rem 0 0 3.5rem; color: #4b5563;">
-            Receive a beautiful shareable link to your organized to-do list!
-          </p>
-        </div>
-        
-        <div class="info-box">
-          <strong><span class="icon">🔗</span>Webhook URL:</strong><br>
+      </div>
+      
+      <!-- Technical Setup -->
+      <div class="section-card">
+        <h2 class="section-title">⚙️ Setup</h2>
+        <div class="tech-box">
+          <h5>🔗 Webhook Configuration</h5>
           <code class="webhook-url">https://{{ request.host }}/webhook</code>
-          <p style="margin: 0.5rem 0 0 0; color: #64748b; font-size: 0.9rem;">
-            Configure this in your Twilio WhatsApp Sandbox settings
+          <p style="margin: 0.5rem 0 0 0; color: #78350f; font-size: 0.9rem;">
+            Configure this URL in your Twilio WhatsApp Sandbox settings
           </p>
         </div>
         
-        <div class="status-box">
-          <strong><span class="icon">✅</span>App Status:</strong> 
-          <span style="color: #dc2626;">Running and ready to receive voice notes!</span>
+        <div class="calendar-badge">
+          <span style="font-size: 1.5rem;">📆</span>
+          <div>
+            <strong>Google Calendar Integration:</strong>
+            <div style="font-size: 0.9rem; margin-top: 0.25rem;">
+              Visit <a href="/auth" style="color: #1e40af; font-weight: 600;">/auth</a> to connect your calendar
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Status -->
+      <div class="section-card" style="text-align: center;">
+        <div class="status-badge">
+          <span class="status-dot"></span>
+          <span>App Running & Ready</span>
         </div>
       </div>
     </div>
