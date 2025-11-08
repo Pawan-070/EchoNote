@@ -2,11 +2,14 @@ from flask import Flask, request, render_template_string, jsonify
 from twilio.twiml.messaging_response import MessagingResponse
 from twilio.rest import Client
 import os, time, uuid, requests, tempfile, threading
+from datetime import datetime, timedelta
 from dotenv import load_dotenv
+from openai import OpenAI
 load_dotenv()
 
 app = Flask(__name__)
 twilio = Client(os.getenv("TWILIO_SID"), os.getenv("TWILIO_TOKEN"))
+openai_client = OpenAI(api_key=os.getenv("OPENAI_KEY"))
 notes = {}
 note_owners = {}
 
@@ -585,6 +588,47 @@ HOME_HTML = """
 </html>
 """
 
+def extract_date_from_text(text):
+    """Extract date from text using OpenAI and return ISO format date string"""
+    try:
+        today = datetime.now()
+        prompt = f"""Today is {today.strftime('%A, %B %d, %Y')}.
+
+Extract the date mentioned in this text and return ONLY the date in YYYY-MM-DD format.
+If no specific date is mentioned, return "none".
+
+Examples:
+- "meeting tomorrow" -> {(today + timedelta(days=1)).strftime('%Y-%m-%d')}
+- "doctor appointment on Friday" -> (calculate next Friday)
+- "buy groceries on December 25th" -> 2025-12-25
+- "call mom" -> none
+
+Text: {text}
+
+Return only the date in YYYY-MM-DD format or "none"."""
+
+        response = openai_client.chat.completions.create(
+            model="gpt-3.5-turbo",
+            messages=[{"role": "user", "content": prompt}],
+            temperature=0,
+            max_tokens=20
+        )
+        
+        result = response.choices[0].message.content
+        if result:
+            result = result.strip()
+        
+        if not result or result.lower() == "none":
+            return None
+        
+        # Validate date format
+        datetime.strptime(result, '%Y-%m-%d')
+        return result
+        
+    except Exception as e:
+        print(f"Error extracting date: {e}")
+        return None
+
 def check_and_send_reminders():
     """Check for due tasks and send WhatsApp reminders"""
     from datetime import datetime
@@ -717,8 +761,9 @@ def webhook():
         try:
             time.sleep(1)
             print(f"Downloading audio from: {url}")
-            auth = (os.getenv("TWILIO_SID"), os.getenv("TWILIO_TOKEN"))
-            audio_response = requests.get(url, auth=auth, timeout=30)
+            twilio_sid = os.getenv("TWILIO_SID", "")
+            twilio_token = os.getenv("TWILIO_TOKEN", "")
+            audio_response = requests.get(url, auth=(twilio_sid, twilio_token), timeout=30)
             audio_response.raise_for_status()
             audio = audio_response.content
             
@@ -737,7 +782,20 @@ def webhook():
             print(f"Transcription: {text}")
             lines = [x.strip() for x in text.replace(". ",".\n").split("\n") if x.strip()]
             id = str(uuid.uuid4())[:8]
-            notes[id] = [{"text": line, "completed": False, "date": None} for line in lines]
+            
+            # Extract dates from each line
+            tasks = []
+            for line in lines:
+                extracted_date = extract_date_from_text(line)
+                tasks.append({
+                    "text": line,
+                    "completed": False,
+                    "date": extracted_date
+                })
+                if extracted_date:
+                    print(f"Extracted date '{extracted_date}' from: {line}")
+            
+            notes[id] = tasks
             note_owners[id] = who
             link = f"https://{host}/view/{id}"
             
