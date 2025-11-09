@@ -45,10 +45,10 @@ The following secrets are configured in Replit Secrets:
 - `/view/<id>` - View a specific to-do list by ID
 
 ## Setup Instructions
-1. Configure Twilio WhatsApp Sandbox webhook to: `https://[your-replit-url]/webhook`
-2. Ensure all environment secrets are set
-3. Run the app on port 5000
-4. Send a voice note to your Twilio WhatsApp number
+1. Open WhatsApp on your phone
+2. Add this number to your contacts: **+1 (415) 523-8886**
+3. Send the activation message: `join though-police`
+4. Start sending voice notes with your tasks and plans!
 
 ## Current State
 - App is running on port 5000

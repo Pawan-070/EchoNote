@@ -970,7 +970,7 @@ HOME_HTML = """
               <div class="step-title">⭐ Get Organized</div>
             </div>
             <p class="step-description">
-              Receive a beautiful shareable link with tasks auto-categorized by importance and synced to your calendar!
+              Receive a beautiful shareable link with tasks auto-categorized by importance!
             </p>
           </div>
         </div>
@@ -999,12 +999,6 @@ HOME_HTML = """
           </div>
           
           <div class="feature-item">
-            <span class="feature-icon">📆</span>
-            <div class="feature-title">Calendar Sync</div>
-            <div class="feature-desc">Google Calendar integration with smart scheduling</div>
-          </div>
-          
-          <div class="feature-item">
             <span class="feature-icon">🔗</span>
             <div class="feature-title">Shareable Links</div>
             <div class="feature-desc">Unique URLs for every voice note</div>
@@ -1015,27 +1009,57 @@ HOME_HTML = """
             <div class="feature-title">Modern Design</div>
             <div class="feature-desc">Beautiful, professional teal-gray interface</div>
           </div>
+          
+          <div class="feature-item">
+            <span class="feature-icon">🕐</span>
+            <div class="feature-title">Live Clock</div>
+            <div class="feature-desc">Current time and date displayed on every page</div>
+          </div>
         </div>
       </div>
       
-      <!-- Technical Setup -->
+      <!-- WhatsApp Setup Guide -->
       <div class="section-card">
-        <h2 class="section-title">⚙️ Setup</h2>
-        <div class="tech-box">
-          <h5>🔗 Webhook Configuration</h5>
-          <code class="webhook-url">https://{{ request.host }}/webhook</code>
-          <p style="margin: 0.5rem 0 0 0; color: #78350f; font-size: 0.9rem;">
-            Configure this URL in your Twilio WhatsApp Sandbox settings
-          </p>
-        </div>
-        
-        <div class="calendar-badge">
-          <span style="font-size: 1.5rem;">📆</span>
-          <div>
-            <strong>Google Calendar Integration:</strong>
-            <div style="font-size: 0.9rem; margin-top: 0.25rem;">
-              Visit <a href="/auth" style="color: #1e40af; font-weight: 600;">/auth</a> to connect your calendar
+        <h2 class="section-title">📱 How to Activate WhatsApp</h2>
+        <div class="steps-container">
+          <div class="step-item">
+            <div class="step-header">
+              <div class="step-number">1</div>
+              <div class="step-title">💬 Open WhatsApp</div>
             </div>
+            <p class="step-description">
+              Open WhatsApp on your phone and start a new chat.
+            </p>
+          </div>
+          
+          <div class="step-item">
+            <div class="step-header">
+              <div class="step-number">2</div>
+              <div class="step-title">📞 Add Contact Number</div>
+            </div>
+            <p class="step-description">
+              Add this number to your contacts: <strong style="color: #0F766E;">+1 (415) 523-8886</strong>
+            </p>
+          </div>
+          
+          <div class="step-item">
+            <div class="step-header">
+              <div class="step-number">3</div>
+              <div class="step-title">✍️ Send Activation Message</div>
+            </div>
+            <p class="step-description">
+              Send the message: <code style="background: #E0F2FE; padding: 0.4rem 0.8rem; border-radius: 8px; color: #0F766E; font-weight: 600;">join though-police</code>
+            </p>
+          </div>
+          
+          <div class="step-item">
+            <div class="step-header">
+              <div class="step-number">4</div>
+              <div class="step-title">🎉 Start Using EchoNote</div>
+            </div>
+            <p class="step-description">
+              You're all set! Now send a voice note with your tasks and plans. EchoNote will transcribe and organize them for you.
+            </p>
           </div>
         </div>
       </div>
